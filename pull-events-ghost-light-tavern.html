@@ -1,0 +1,350 @@
+<style>
+/* General styling for the grid container */
+#event-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  justify-content: center;
+  gap: 16px;
+  position: relative;
+}
+
+/* Styling for each grid item */
+.grid-item {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Scale and shadow effect on hover */
+.grid-item:hover {
+  transform: scale(1.05);
+  box-shadow: 0px 6px 20px rgba(0, 0, 0, 0.5);
+}
+
+/* Styling for the flyer image */
+.grid-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Text container for event details */
+.grid-item .event-details {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 8px 12px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0));
+  color: #fff;
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+  text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background 0.3s ease;
+}
+
+/* Styling for the event date */
+.grid-item .event-date {
+  text-align: center;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+/* Styling for the event name and venue */
+.grid-item .event-info {
+  margin-left: 8px;
+  text-align: left;
+  flex-grow: 1;
+  padding: 5px;
+}
+
+.grid-item .event-info div:first-child {
+  font-weight: bold;
+}
+
+/* Navigation buttons styling */
+.nav-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  color: #333;
+  font-size: 24px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  width: 60px;
+  height: 60px;
+  flex-shrink: 0;
+}
+
+.nav-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0px 6px 20px rgba(0, 0, 0, 0.2);
+  border-color: #ccc;
+  background: #f9f9f9;
+}
+
+.nav-button:active {
+  transform: scale(0.98);
+}
+
+.nav-button:disabled {
+  background: white;
+  border-color: #f0f0f0;
+  color: #ccc;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.nav-button:disabled:hover {
+  transform: none;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  background: white;
+}
+
+/* Page indicator styling */
+.page-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  color: #333;
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+  font-weight: bold;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  width: 80px;
+  height: 60px;
+  flex-shrink: 0;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  #event-container {
+    grid-template-columns: repeat(2, 1fr);
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .grid-item, .nav-button, .page-indicator {
+    width: 40vw;
+  }
+
+  .grid-item .event-date {
+    font-size: 10px;
+    line-height: 15px;
+  }
+
+  .grid-item .event-details {
+    font-size: 7px;
+  }
+  
+  .event-info {
+    line-height: 10px;
+    padding: 2px;
+  }
+
+  .nav-button {
+    font-size: 20px;
+    width: 50px;
+    height: 50px;
+  }
+
+  .page-indicator {
+    font-size: 12px;
+    width: 70px;
+    height: 50px;
+  }
+}
+
+@media (max-width: 480px) {
+  #event-container {
+    grid-template-columns: repeat(2, 1fr);
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .grid-item, .nav-button, .page-indicator {
+    width: 40vw;
+  }
+
+  .grid-item .event-date {
+    font-size: 10px;
+    line-height: 15px;
+  }
+
+  .grid-item .event-details {
+    font-size: 7px;
+  }
+  
+  .event-info {
+    line-height: 10px;
+    padding: 2px;
+  }
+
+  .nav-button {
+    font-size: 18px;
+    width: 45px;
+    height: 45px;
+  }
+
+  .page-indicator {
+    font-size: 11px;
+    width: 65px;
+    height: 45px;
+  }
+}
+</style>
+
+<body>
+<!-- Container for the event grid -->
+<div id="event-container"></div>
+
+<script>
+  const apiUrl = "https://posh.vip/api/web/v2/util/group_url/ghost-light-tavern";
+  const eventsPerPage = 6;
+  let currentPage = 0;
+  let allEvents = [];
+
+  async function populateGrid() {
+    const gridContainer = document.getElementById("event-container");
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    try {
+      const response = await fetch(apiUrl);
+      const data = await response.json();
+
+      const events = data.events;
+      gridContainer.innerHTML = "";
+
+      const futureEvents = events
+        .filter(event => new Date(event.start) >= today)
+        .sort((a, b) => new Date(a.start) - new Date(b.start));
+
+      if (futureEvents.length === 0) {
+        gridContainer.innerHTML = "<p>No upcoming events.</p>";
+        return;
+      }
+
+      allEvents = futureEvents;
+      currentPage = 0;
+      renderCurrentPage();
+    } catch (error) {
+      console.error("Error fetching events:", error);
+      gridContainer.innerHTML = "<p>Failed to load events.</p>";
+    }
+  }
+
+  function renderCurrentPage() {
+    const gridContainer = document.getElementById("event-container");
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Clear container
+    gridContainer.innerHTML = "";
+    
+    // Calculate total pages
+    const totalPages = Math.ceil(allEvents.length / eventsPerPage);
+    
+    // Get events for current page
+    const startIndex = currentPage * eventsPerPage;
+    const endIndex = Math.min(startIndex + eventsPerPage, allEvents.length);
+    const currentEvents = allEvents.slice(startIndex, endIndex);
+    
+    // Create navigation elements
+    const prevButton = document.createElement("button");
+    prevButton.classList.add("nav-button");
+    prevButton.innerHTML = "◀";
+    prevButton.disabled = currentPage === 0;
+    prevButton.onclick = () => {
+      if (currentPage > 0) {
+        currentPage--;
+        renderCurrentPage();
+      }
+    };
+    
+    const pageIndicator = document.createElement("div");
+    pageIndicator.classList.add("page-indicator");
+    pageIndicator.innerHTML = `${currentPage + 1} of ${totalPages}`;
+    
+    const nextButton = document.createElement("button");
+    nextButton.classList.add("nav-button");
+    nextButton.innerHTML = "▶";
+    nextButton.disabled = currentPage === totalPages - 1;
+    nextButton.onclick = () => {
+      if (currentPage < totalPages - 1) {
+        currentPage++;
+        renderCurrentPage();
+      }
+    };
+    
+    // Add events for current page
+    currentEvents.forEach(event => {
+      const eventDate = new Date(event.start);
+      const diffInDays = (eventDate - today) / (1000 * 60 * 60 * 24);
+
+      const gridItem = document.createElement("div");
+      gridItem.classList.add("grid-item");
+
+      const eventUrl = `https://posh.vip/e/${event.url}?t=website`;
+
+      let weekday = diffInDays < 7 ? eventDate.toLocaleDateString("en-US", { weekday: "short" }).toUpperCase() : "";
+      let month = diffInDays >= 7 ? eventDate.toLocaleDateString("en-US", { month: "short" }).toUpperCase() : "";
+      let day = diffInDays >= 7 ? eventDate.toLocaleDateString("en-US", { day: "numeric" }) : "";
+
+      gridItem.innerHTML = `
+        <a href="${eventUrl}" target="_blank" style="text-decoration: none; color: inherit; display: block;">
+          <img src="${event.flyer}" alt="${event.name}">
+          <div class="event-details">
+            <div class="event-date">
+              <div>${weekday}</div>
+              <div>${month}</div>
+              <div>${day}</div>
+            </div>
+            <div class="event-info">
+              <div>${event.name}</div>
+              <div>${event.venue.name}</div>
+            </div>
+          </div>
+        </a>
+      `;
+
+      gridContainer.appendChild(gridItem);
+    });
+    
+    // Add navigation elements only if there are multiple pages
+    if (totalPages > 1) {
+      // Always add navigation in a separate centered row below
+      const navRow = document.createElement("div");
+      navRow.style.gridColumn = "1 / -1";
+      navRow.style.display = "flex";
+      navRow.style.gap = "16px";
+      navRow.style.marginTop = "16px";
+      navRow.style.justifyContent = "center";
+      
+      navRow.appendChild(prevButton);
+      navRow.appendChild(pageIndicator);
+      navRow.appendChild(nextButton);
+      
+      gridContainer.appendChild(navRow);
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", populateGrid);
+</script>
+</body>
